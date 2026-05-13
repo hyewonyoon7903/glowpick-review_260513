@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDRN 앰플 리뷰 분석 — 글로우픽 30건</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: #f8f8f6;
+    color: #2c2c2a;
+    padding: 24px 16px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  /* header */
+  .header {
+    background: #18355E;
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .header p  { font-size: 12px; color: #a8c4e0; }
+
+  /* KPI cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 10px; padding: 14px 12px; text-align: center; }
+  .kpi .val { font-size: 22px; font-weight: 600; color: #18355E; }
+  .kpi .lbl { font-size: 11px; color: #888780; margin-bottom: 4px; }
+
+  /* cards */
+  .card {
+    background: #fff;
+    border: 0.5px solid #d3d1c7;
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .sec-title { font-size: 13px; font-weight: 600; color: #18355E; margin-bottom: 12px; }
+
+  /* grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .mb { margin-bottom: 14px; }
+
+  /* chart wrappers */
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* legend */
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: #888780; margin-bottom: 10px; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  /* bar */
+  .bar-wrap { background: #f1efe8; border-radius: 4px; height: 8px; overflow: hidden; margin-top: 3px; }
+  .bar-pos { background: #1D9E75; height: 100%; border-radius: 4px; }
+  .bar-neg { background: #E24B4A; height: 100%; border-radius: 4px; }
+
+  /* scent bars */
+  .scent-row { margin-bottom: 10px; }
+  .scent-label { display: flex; justify-content: space-between; font-size: 11px; color: #5f5e5a; margin-bottom: 3px; }
+
+  /* table */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  thead th {
+    background: #18355E; color: #fff;
+    padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px;
+  }
+  tbody tr:nth-child(even) { background: #f8f8f6; }
+  tbody td { padding: 7px 6px; vertical-align: top; border-bottom: 0.5px solid #e8e7e2; }
+  .td-pos { color: #0F6E56; }
+  .td-neg { color: #A32D2D; }
+  .td-muted { color: #888780; }
+  .star { color: #E24B4A; font-weight: 600; }
+
+  /* insight boxes */
+  .insight {
+    background: #EEF4FB;
+    border-left: 3px solid #18355E;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .insight strong { font-size: 12px; color: #18355E; display: block; margin-bottom: 3px; }
+  .insight p { font-size: 11.5px; color: #444441; line-height: 1.55; }
+
+  /* action table */
+  .act-tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .act-tbl thead th { background: #18355E; color: #fff; padding: 7px 10px; font-weight: 600; font-size: 11px; }
+  .act-tbl tbody tr:nth-child(even) { background: #f8f8f6; }
+  .act-tbl tbody td { padding: 7px 10px; border-bottom: 0.5px solid #d3d1c7; vertical-align: top; }
+
+  /* sr-only */
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  /* footer */
+  .footer { text-align: center; font-size: 11px; color: #b4b2a9; margin-top: 28px; padding-top: 16px; border-top: 0.5px solid #d3d1c7; }
+
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h2 class="sr-only">PDRN 앰플 글로우픽 리뷰 30개 전수 분석 — 긍정·부정 포함</h2>
+
+<!-- 헤더 -->
+<div class="header">
+  <h1>글로우픽 고객 리뷰 분석 보고서</h1>
+  <p>PDRN 피디알엔유 리페어 앰플 &nbsp;|&nbsp; 30건 전수 분석 &nbsp;|&nbsp; 2025. 05</p>
+</div>
+
+<!-- KPI -->
+<div class="kpi-grid">
+  <div class="kpi"><div class="lbl">총 리뷰</div><div class="val">30개</div></div>
+  <div class="kpi"><div class="lbl">평균 별점</div><div class="val">4.5<span style="font-size:14px;font-weight:400">/5</span></div></div>
+  <div class="kpi"><div class="lbl">재구매 의향 명시</div><div class="val">7건</div></div>
+  <div class="kpi"><div class="lbl">향 불만 리뷰</div><div class="val">12건</div></div>
+</div>
+
+<!-- 차트 1·2: 긍정·부정 키워드 -->
+<div class="grid-2">
+  <div class="card">
+    <div class="sec-title">긍정 키워드 언급 빈도 (30개 기준)</div>
+    <div class="legend"><span><span class="legend-dot" style="background:#1D9E75"></span>언급 건수</span></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="posChart" role="img" aria-label="긍정 키워드 빈도 차트"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="sec-title">부정 키워드 언급 빈도 (30개 기준)</div>
+    <div class="legend"><span><span class="legend-dot" style="background:#E24B4A"></span>언급 건수</span></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="negChart" role="img" aria-label="부정 키워드 빈도 차트"></canvas></div>
+  </div>
+</div>
+
+<!-- 별점 + 향 -->
+<div class="card mb">
+  <div class="sec-title">별점 분포 + 향 만족도 비교</div>
+  <div class="grid-2" style="margin-bottom:0;gap:24px">
+    <div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#1D9E75"></span>★5 (15개)</span>
+        <span><span class="legend-dot" style="background:#5DCAA5"></span>★4.5 (4개)</span>
+        <span><span class="legend-dot" style="background:#9FE1CB"></span>★4 (8개)</span>
+        <span><span class="legend-dot" style="background:#EF9F27"></span>★3.5 (2개)</span>
+        <span><span class="legend-dot" style="background:#E24B4A"></span>★3 (1개)</span>
+      </div>
+      <div class="chart-wrap" style="height:160px"><canvas id="starChart" role="img" aria-label="별점 분포 도넛 차트"></canvas></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
+      <div style="font-size:12px;color:#5f5e5a;margin-bottom:2px;font-weight:500">향 반응 분포 (30개)</div>
+      <div class="scent-row">
+        <div class="scent-label"><span>부정 (강함·인위적·아저씨향)</span><span style="color:#A32D2D;font-weight:600">9건</span></div>
+        <div class="bar-wrap"><div class="bar-neg" style="width:30%"></div></div>
+      </div>
+      <div class="scent-row">
+        <div class="scent-label"><span>중립 (호불호 있을 것)</span><span style="color:#5F5E5A;font-weight:600">3건</span></div>
+        <div class="bar-wrap"><div style="background:#888780;height:100%;width:10%;border-radius:4px"></div></div>
+      </div>
+      <div class="scent-row">
+        <div class="scent-label"><span>긍정 (파우더리·은은·청량)</span><span style="color:#0F6E56;font-weight:600">4건</span></div>
+        <div class="bar-wrap"><div class="bar-pos" style="width:13%"></div></div>
+      </div>
+      <div class="scent-row">
+        <div class="scent-label"><span>미언급</span><span style="font-weight:600">14건</span></div>
+        <div class="bar-wrap"><div style="background:#d3d1c7;height:100%;width:47%;border-radius:4px"></div></div>
+      </div>
+      <div style="padding-top:8px;border-top:0.5px solid #d3d1c7;font-size:11px;color:#5f5e5a">
+        → 향에 대해 언급한 16명 중 <strong>75%가 부정·중립</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 리뷰 전체 표 -->
+<div class="card mb">
+  <div class="sec-title">리뷰별 긍정 / 부정 전체 목록 (30건)</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:12%">닉네임</th>
+          <th style="width:7%;text-align:center">별점</th>
+          <th style="width:7%;text-align:center">나이</th>
+          <th style="width:37%">긍정 포인트</th>
+          <th style="width:37%">부정 포인트</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>yumm2e</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">51세</td><td class="td-pos">고농축·쫀쫀한 제형, 흡수 후 쏙 스며듦, 은은한 원료향, PDRN·3GF·글루타치온</td><td class="td-muted">—</td></tr>
+        <tr><td>흰비바람</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">36세</td><td class="td-pos">스포이드 위생적·깔끔, 물광 흡수, PDRN 비교 사용자 만족, 꾸준히 쓸 계획</td><td class="td-muted">—</td></tr>
+        <tr><td>선공777</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">33세</td><td class="td-pos">고농축 체감, 피부결 매꿔주는 느낌, 속수분 채워짐, 자극 없이 효과 확실</td><td class="td-muted">—</td></tr>
+        <tr><td>간홍</td><td class="star" style="text-align:center">★4.5</td><td style="text-align:center;color:#888780">35세</td><td class="td-pos">패키지 깔끔, 투명 물결 제형, 얼굴 촉촉·커버, 청량한 향</td><td class="td-neg">뚜껑 눌러야 내용물 나옴, 케이스 불편</td></tr>
+        <tr><td>글로리#lkX8lo</td><td class="star" style="text-align:center">★4.5</td><td style="text-align:center;color:#888780">33세</td><td class="td-pos">붉은기 진정, 부드럽게 흡수, 피부 차분해짐, 건조함 감소</td><td class="td-muted">—</td></tr>
+        <tr><td>곰팅이바부</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">31세</td><td class="td-pos">쫀쫀하게 올라오는 느낌, 기분 나쁘지 않음</td><td class="td-neg">살짝 끈적임, 남자화장품 향</td></tr>
+        <tr><td>솔이내꾸</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">33세</td><td class="td-pos">스포이드 위생적, 순하게 흡수, 아침 수분유지력 우수, 홍조 진정</td><td class="td-muted">—</td></tr>
+        <tr><td>zebra</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">39세</td><td class="td-pos">촉촉함 오래 지속, 피부결 매끈, 메이크업 잘 먹음, 보습력 우수</td><td class="td-neg">향 조금 강함, 스포이드 살짝 번거로움</td></tr>
+        <tr><td>메로낭팡</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">33세</td><td class="td-pos">자극 없이 피부 편안, 진정 효과</td><td class="td-neg">스포이드 귀찮음, 살짝 끈적임</td></tr>
+        <tr><td>jamiejoo</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">34세</td><td class="td-pos">자극 없음, 수분진정 느낌, 뻘개지지 않음</td><td class="td-neg">흡수 더딤, 앰플 대비 영양감 부족, 장벽강화 미흡</td></tr>
+        <tr><td>코주눈나</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">31세</td><td class="td-pos">예민 피부 부담 없음, PDRN 피부 탄력 도움</td><td class="td-muted">—</td></tr>
+        <tr><td>웅봉</td><td class="star" style="text-align:center">★3.5</td><td style="text-align:center;color:#888780">34세</td><td class="td-pos">쫀쫀한 제형, 지성 피부에 적합</td><td class="td-neg">속건조 미해결 (건성·수부지 비적합), 용기 불편, 향 강함</td></tr>
+        <tr><td>행피333</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">40세</td><td class="td-pos">발림성 우수, 끈적임 없음, 트러블·따가움 없음, 레이어링 가능</td><td class="td-muted">—</td></tr>
+        <tr><td>shayne</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">32세</td><td class="td-pos">고농축 체감, 매끄럽게 흡수, 화장 밀림 없음, 피부 장벽 강화·광채</td><td class="td-muted">—</td></tr>
+        <tr><td>츄츄츄33</td><td class="star" style="text-align:center">★3</td><td style="text-align:center;color:#888780">32세</td><td class="td-pos">PDRN 체험 기회</td><td class="td-neg">재구매 의향 없음, 끈적임 강함, 향 별로</td></tr>
+        <tr><td>글픽애정해</td><td class="star" style="text-align:center">★3.5</td><td style="text-align:center;color:#888780">37세</td><td class="td-pos">촉촉함, 발림 좋음, 흡수력 나쁘지 않음</td><td class="td-neg">향 너무 강함 (인위적), 특별한 점 모르겠음, 사용법 안내 부족</td></tr>
+        <tr><td>보통의존재S2</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">39세</td><td class="td-pos">발림성·흡수력 최고, 소량으로도 수분감, 향 은은함, 랑콤보다 피부 쫀쫀해짐</td><td class="td-muted">—</td></tr>
+        <tr><td>hikaru38</td><td class="star" style="text-align:center">★4.5</td><td style="text-align:center;color:#888780">38세</td><td class="td-pos">스포이드 방식 좋음, 5일 후 쫀쫀해짐 체감, 초음파기기 궁합 최상</td><td class="td-muted">—</td></tr>
+        <tr><td>꼬마아너aa</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">36세</td><td class="td-pos">흡수력 좋음, 피부 쫀득해짐, 수분감 오래 지속</td><td class="td-neg">꽃향·단향 — 무향 선호자는 꺼릴 수 있음</td></tr>
+        <tr><td>에민토마토</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">31세</td><td class="td-pos">용기 간편, 보습 우수, 피부결 따라 서서히 흡수</td><td class="td-neg">냄새가 엄마들 화장품 느낌 (약한 호불호)</td></tr>
+        <tr><td>푸카푸</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">36세</td><td class="td-pos">향 파우더리해서 너무 좋음, 점성 있어 바르기 편함, PDRN·세라마이드·히알루론산</td><td class="td-muted">—</td></tr>
+        <tr><td>jyd</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">34세</td><td class="td-pos">부담 없이 촉촉 흡수, 피부결 매끄러워짐, 끈적임 없이 산뜻, 재구매 의향</td><td class="td-muted">—</td></tr>
+        <tr><td>S.S</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">33세</td><td class="td-pos">트러블·붉어짐 없음, 아침 윤기, 화장 잘됨, 밤 사용 효과 탁월</td><td class="td-neg">향이 옛날 스킨향, 강하게 느낄 수 있음</td></tr>
+        <tr><td>DE0801</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">30세</td><td class="td-pos">예민 피부 안정적, 수분 유지, 흡수력 좋음, 끈적이지 않음</td><td class="td-muted">—</td></tr>
+        <tr><td>gajigaji</td><td class="star" style="text-align:center">★4.5</td><td style="text-align:center;color:#888780">36세</td><td class="td-pos">스포이드 위생적·편리, 가볍게 흡수, 트러블 없음, 다음날 촉촉</td><td class="td-neg">향 강함 (옛날 화장품 냄새)</td></tr>
+        <tr><td>우왕좌왕</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">34세</td><td class="td-pos">수분감 좋음</td><td class="td-neg">스포이드 내용물 잘 안 찍힘, 맨즈·아저씨 화장품 향</td></tr>
+        <tr><td>디용잉ㅇ</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">32세</td><td class="td-pos">재생·탄력 체감, 바른 후 촉촉, 아침까지 수분 유지, 재구매 의향</td><td class="td-muted">—</td></tr>
+        <tr><td>글로리#8UCr6C</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">34세</td><td class="td-pos">점성 있음, 다음날까지 촉촉 유지</td><td class="td-neg">향 강한 편, 호불호 있을 것</td></tr>
+        <tr><td>러키비키</td><td class="star" style="text-align:center">★4</td><td style="text-align:center;color:#888780">36세</td><td class="td-pos">스포이드 위생적, 무겁지 않은 발림, 피부 쫀쫀하게 발려 좋음</td><td class="td-neg">향이 강해 부담스러움 — <strong>향만 개선되면 좋겠다</strong>고 명시</td></tr>
+        <tr><td>뚱뚱죽겠지</td><td class="star" style="text-align:center">★5</td><td style="text-align:center;color:#888780">40세</td><td class="td-pos">속수분 잡힘, 재생·광채·탄력, 트러블·각질 잡힘, 흡수 후 쫀쫀함</td><td class="td-muted">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 핵심 인사이트 -->
+<div class="card mb">
+  <div class="sec-title">핵심 인사이트</div>
+  <div class="insight">
+    <strong>① 향이 유일한 구조적 문제</strong>
+    <p>향에 대해 언급한 16명 중 75%가 부정·중립. "아저씨 화장품 향", "인위적인 향" 표현 반복. 제형·흡수·성분 만족도는 매우 높아, 향이 재구매를 막는 유일한 이탈 요인으로 확인됨.</p>
+  </div>
+  <div class="insight">
+    <strong>② 민감성·건성 피부가 핵심 고객</strong>
+    <p>민감성 언급 14명(47%), 건성·수부지 9명(30%). 두 타입 모두 "자극 없음·진정·트러블 없음"이 반복 등장. 단, 극건성 2명은 속건조 해결 미흡 → 크림 레이어링 권장 안내 필요.</p>
+  </div>
+  <div class="insight">
+    <strong>③ 스포이드 사용법 안내가 전환율에 영향</strong>
+    <p>"처음에 어떻게 쓰는지 몰랐다" 4~5건 언급. 신생 브랜드인 만큼 상세페이지·SNS에 사용법 영상/GIF 삽입이 재구매율 개선에 직결될 것으로 판단됨.</p>
+  </div>
+</div>
+
+<!-- 개선 제안 -->
+<div class="card mb">
+  <div class="sec-title">즉시 실행 가능한 개선 제안</div>
+  <div class="tbl-wrap">
+    <table class="act-tbl">
+      <thead><tr><th style="width:15%">우선순위</th><th style="width:18%">항목</th><th>실행 방향</th></tr></thead>
+      <tbody>
+        <tr><td>🔴 최우선</td><td>향 개선</td><td>차기 포뮬라 개선 검토. 당장은 "연어 유래 성분 특유의 향"으로 상세페이지에서 선제 안내해 이탈 최소화</td></tr>
+        <tr><td>🟠 단기</td><td>사용법 콘텐츠</td><td>스포이드 사용법 15초 릴스·GIF 제작 → 상세페이지 최상단 배치</td></tr>
+        <tr><td>🟡 중기</td><td>타겟 메시지</td><td>"민감성·수부지 전용 PDRN 앰플" 문구 강화. 지성 피부 언급 최소화</td></tr>
+        <tr><td>🟢 참고</td><td>기기 시너지</td><td>초음파·흡수기기 유저 대상 콜라보 마케팅 (궁합 콘텐츠) 기회 검토</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 피부타입 + 연령대 -->
+<div class="grid-2">
+  <div class="card">
+    <div class="sec-title">피부 타입별 분포</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>민감성 (단독·복합)</span><span style="font-weight:600">14명</span></div><div class="bar-wrap"><div class="bar-pos" style="width:46.7%"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>건성/수부지</span><span style="font-weight:600">9명</span></div><div class="bar-wrap"><div class="bar-pos" style="width:30%;background:#5DCAA5"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>복합성/중성</span><span style="font-weight:600">5명</span></div><div class="bar-wrap"><div class="bar-pos" style="width:16.7%;background:#9FE1CB"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>지성</span><span style="font-weight:600">2명</span></div><div class="bar-wrap"><div class="bar-pos" style="width:6.7%;background:#E1F5EE"></div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec-title">연령대 분포</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>30~34세</span><span style="font-weight:600">17명 (57%)</span></div><div class="bar-wrap"><div class="bar-pos" style="width:57%"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>35~39세</span><span style="font-weight:600">10명 (33%)</span></div><div class="bar-wrap"><div class="bar-pos" style="width:33%;background:#5DCAA5"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:3px"><span>40세 이상</span><span style="font-weight:600">3명 (10%)</span></div><div class="bar-wrap"><div class="bar-pos" style="width:10%;background:#9FE1CB"></div></div></div>
+      <div style="padding-top:8px;border-top:0.5px solid #d3d1c7;font-size:11px;color:#5f5e5a">
+        핵심 타겟: <strong>30대 초·중반 민감성 피부</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">PDRN 피디알엔유 리페어 앰플 · 글로우픽 리뷰 분석 · 2025. 05</div>
+
+</div><!-- /wrap -->
+
+<script>
+const tc = '#5f5e5a';
+const gc = 'rgba(0,0,0,0.06)';
+
+new Chart(document.getElementById('posChart'), {
+  type: 'bar',
+  data: {
+    labels: ['흡수력/발림성','쫀쫀·촉촉 제형','수분 지속력','PDRN 성분 신뢰','트러블 없음/진정','끈적임 없음','위생적 스포이드','탄력·광채 체감','재구매 의향 명시','메이크업 잘 받음'],
+    datasets: [{ data: [20,18,15,14,12,10,10,7,7,5], backgroundColor: '#1D9E75', borderWidth: 0, borderRadius: 3 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw}건` } } },
+    scales: {
+      x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } }, max: 22 },
+      y: { grid: { display: false }, ticks: { color: tc, font: { size: 10 } } }
+    }
+  }
+});
+
+new Chart(document.getElementById('negChart'), {
+  type: 'bar',
+  data: {
+    labels: ['향 호불호 (강함·인위적·아저씨향)','스포이드 사용 불편','끈적임','영양감/장벽강화 효과 미흡','속건조 미해결','사용법 안내 부족'],
+    datasets: [{ data: [12,5,4,3,2,1], backgroundColor: '#E24B4A', borderWidth: 0, borderRadius: 3 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw}건` } } },
+    scales: {
+      x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } }, max: 14 },
+      y: { grid: { display: false }, ticks: { color: tc, font: { size: 10 } } }
+    }
+  }
+});
+
+new Chart(document.getElementById('starChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['★5 (15개)', '★4.5 (4개)', '★4 (8개)', '★3.5 (2개)', '★3 (1개)'],
+    datasets: [{ data: [15,4,8,2,1], backgroundColor: ['#1D9E75','#5DCAA5','#9FE1CB','#EF9F27','#E24B4A'], borderWidth: 0 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '62%',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw}개` } } }
+  }
+});
+</script>
+</body>
+</html>
